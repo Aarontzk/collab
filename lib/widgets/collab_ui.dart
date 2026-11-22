@@ -164,12 +164,14 @@ class OutlinedList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    // Material (bukan Container berwarna) supaya ripple ListTile di dalamnya
+    // tetap terlihat.
+    return Material(
+      color: Colors.white,
       clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: Colors.white,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: ItsColors.border),
+        side: const BorderSide(color: ItsColors.border),
       ),
       child: Column(
         children: [
