@@ -6,6 +6,7 @@ import 'package:collab/models/profile.dart';
 import 'package:collab/models/task.dart';
 import 'package:collab/screens/detail_kontribusi_kelompok.dart';
 import 'package:collab/services/auth_service.dart';
+import 'package:collab/services/group_service.dart';
 import 'package:collab/services/home_service.dart';
 import 'package:collab/services/profile_service.dart';
 import 'package:collab/services/supabase_service.dart';
@@ -57,6 +58,7 @@ class _DaftarKelompokKontribusiScreenState
     extends State<DaftarKelompokKontribusiScreen> {
   final _home = HomeService();
   final _profiles = ProfileService();
+  final _groups = GroupService();
   late Future<_Data> _data = _load();
 
   Future<_Data> _load() async {
@@ -76,7 +78,15 @@ class _DaftarKelompokKontribusiScreenState
 
     final groups = <KelompokKontribusi>[];
     for (final group in work.groups) {
-      groups.add(await _loadGroup(work, group, meetingCounts[group.id] ?? 0));
+      var withMembers = group;
+      try {
+        withMembers = group.withMembers(await _groups.fetchMembers(group.id));
+      } catch (_) {
+        // Anggota gagal dimuat: kartu tetap tampil tanpa avatar.
+      }
+      groups.add(
+        await _loadGroup(work, withMembers, meetingCounts[group.id] ?? 0),
+      );
     }
     return _Data(profile: profile, groups: groups);
   }
@@ -86,7 +96,10 @@ class _DaftarKelompokKontribusiScreenState
     Group group,
     int totalMeetings,
   ) async {
-    final tasks = work.tasksOf(group.id);
+    final tasks = [
+      for (final task in work.tasks)
+        if (task.groupId == group.id) task,
+    ];
     final done = tasks.where((task) => task.isDone).length;
 
     var scores = <ContributionScore>[];
@@ -107,7 +120,7 @@ class _DaftarKelompokKontribusiScreenState
 
     ContributionScore? mine;
     for (final score in scores) {
-      if (score.userId == work.myUserId) mine = score;
+      if (score.userId == _home.myUserId) mine = score;
     }
 
     var average = 0.0;

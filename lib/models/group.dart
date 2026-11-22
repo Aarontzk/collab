@@ -1,5 +1,3 @@
-/// Peran anggota di dalam kelompok, sama dengan enum `member_role` di
-/// supabase/schema.sql.
 enum MemberRole {
   leader('leader', 'Ketua'),
   member('member', 'Anggota'),
@@ -10,48 +8,14 @@ enum MemberRole {
   final String dbValue;
   final String label;
 
-  static MemberRole fromDb(String? value) => switch (value) {
-    'leader' => MemberRole.leader,
-    'lecturer' => MemberRole.lecturer,
-    _ => MemberRole.member,
-  };
+  bool get isStudent => this != MemberRole.lecturer;
+
+  static MemberRole fromDb(String value) => MemberRole.values.firstWhere(
+    (r) => r.dbValue == value,
+    orElse: () => throw FormatException('Role tidak dikenal: $value'),
+  );
 }
 
-/// Satu anggota kelompok (baris `group_members` + profilnya).
-class Member {
-  const Member({
-    required this.userId,
-    required this.fullName,
-    this.nrp,
-    this.avatarUrl,
-    this.role = MemberRole.member,
-  });
-
-  final String userId;
-  final String fullName;
-  final String? nrp;
-  final String? avatarUrl;
-  final MemberRole role;
-
-  factory Member.fromJson(Map<String, dynamic> json) {
-    final profile = json['profiles'] as Map<String, dynamic>?;
-    return Member(
-      userId: (json['user_id'] ?? profile?['id'] ?? '') as String,
-      fullName: (profile?['full_name'] ?? json['full_name'] ?? 'Anggota') as String,
-      nrp: profile?['nrp'] as String?,
-      avatarUrl: profile?['avatar_url'] as String?,
-      role: MemberRole.fromDb(json['role'] as String?),
-    );
-  }
-
-  String get firstName {
-    final name = fullName.trim();
-    if (name.isEmpty) return 'Anggota';
-    return name.split(RegExp(r'\s+')).first;
-  }
-}
-
-/// Satu kelompok beserta peran saya di dalamnya.
 class Group {
   const Group({
     required this.id,
@@ -69,52 +33,90 @@ class Group {
   final String inviteCode;
   final String lecturerCode;
   final MemberRole myRole;
+
+  /// Anggota kelompok. Kosong kalau belum dimuat (lihat [withMembers]).
   final List<Member> members;
 
-  factory Group.fromJson(
-    Map<String, dynamic> json, {
-    required MemberRole myRole,
-    List<Member> members = const [],
-  }) => Group(
-    id: json['id'] as String,
-    name: json['name'] as String,
-    courseName: json['course_name'] as String?,
-    inviteCode: (json['invite_code'] ?? '') as String,
-    lecturerCode: (json['lecturer_code'] ?? '') as String,
-    myRole: myRole,
-    members: members,
-  );
+  bool get amLeader => myRole == MemberRole.leader;
 
-  Group copyWith({List<Member>? members, MemberRole? myRole}) => Group(
+  /// Jumlah mahasiswa (tanpa dosen).
+  int get studentCount => members.students.length;
+
+  /// Nama mata kuliah, atau penanda kalau kosong.
+  String get displayCourse {
+    final course = courseName?.trim();
+    return (course == null || course.isEmpty) ? 'Tanpa mata kuliah' : course;
+  }
+
+  Group withMembers(List<Member> members) => Group(
     id: id,
     name: name,
     courseName: courseName,
     inviteCode: inviteCode,
     lecturerCode: lecturerCode,
-    myRole: myRole ?? this.myRole,
-    members: members ?? this.members,
+    myRole: myRole,
+    members: members,
   );
 
-  /// Jumlah anggota mahasiswa (dosen tidak dihitung).
-  int get studentCount => members
-      .where((m) => m.role != MemberRole.lecturer)
-      .length;
+  factory Group.fromJson(Map<String, dynamic> json, MemberRole myRole) => Group(
+    id: json['id'] as String,
+    name: json['name'] as String,
+    courseName: json['course_name'] as String?,
+    inviteCode: json['invite_code'] as String,
+    lecturerCode: json['lecturer_code'] as String,
+    myRole: myRole,
+  );
 
-  String get displayCourse {
-    final course = courseName?.trim();
-    return course == null || course.isEmpty ? 'Tanpa mata kuliah' : course;
+  /// Dari query `group_members.select('role, groups(*)')`.
+  factory Group.fromMembershipJson(Map<String, dynamic> json) => Group.fromJson(
+    json['groups'] as Map<String, dynamic>,
+    MemberRole.fromDb(json['role'] as String),
+  );
+}
+
+class Member {
+  const Member({
+    required this.userId,
+    required this.fullName,
+    required this.role,
+    this.avatarUrl,
+    this.nrp,
+  });
+
+  final String userId;
+  final String fullName;
+  final MemberRole role;
+  final String? avatarUrl;
+  final String? nrp;
+
+  /// Dari query `group_members.select('user_id, role, profiles(full_name, avatar_url)')`.
+  factory Member.fromJson(Map<String, dynamic> json) {
+    final profile = json['profiles'] as Map<String, dynamic>;
+    return Member(
+      userId: json['user_id'] as String,
+      fullName: profile['full_name'] as String,
+      role: MemberRole.fromDb(json['role'] as String),
+      avatarUrl: profile['avatar_url'] as String?,
+      nrp: profile['nrp'] as String?,
+    );
   }
 }
 
-extension MemberList on List<Member> {
-  Member? byId(String? userId) {
-    for (final member in this) {
-      if (member.userId == userId) return member;
+extension MemberLookup on List<Member> {
+  List<Member> get students => where((m) => m.role.isStudent).toList();
+
+  Member? byId(String userId) {
+    for (final m in this) {
+      if (m.userId == userId) return m;
     }
     return null;
   }
 
-  String nameOf(String? userId) => byId(userId)?.fullName ?? 'Tanpa PIC';
-
-  String firstNameOf(String? userId) => byId(userId)?.firstName ?? 'Tanpa PIC';
+  String nameOf(String? userId) {
+    if (userId == null) return 'Belum ada PIC';
+    for (final m in this) {
+      if (m.userId == userId) return m.fullName;
+    }
+    return 'Anggota keluar';
+  }
 }

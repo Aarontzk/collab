@@ -38,7 +38,11 @@ class DetailKontribusiAnggotaScreen extends StatelessWidget {
     final maxScale = chartMaxFor(scores, totals.fairShare);
     final member =
         group.members.byId(score.userId) ??
-        Member(userId: score.userId, fullName: score.fullName);
+        Member(
+          userId: score.userId,
+          fullName: score.fullName,
+          role: MemberRole.member,
+        );
 
     double shareOf(double value, double total) {
       if (total > 0) return value / total * 100;
@@ -522,9 +526,9 @@ class _TaskRow extends StatelessWidget {
     final late = isTaskLate(task);
     final points = taskPointsOf(task);
     final detail = approved
-        ? '${task.weight.label} (${task.weight.points}), '
+        ? '${task.weight.label} (${task.weight.value}), '
               '${late ? 'terlambat ×0,7' : 'tepat waktu'}'
-        : '${task.weight.label} (${task.weight.points}), ditolak';
+        : '${task.weight.label} (${task.weight.value}), ditolak';
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
