@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Cover Laporan Collab</title>
+<style>
+  @font-face { font-family: PJS; font-weight: 800; src: url(../../assets/fonts/PlusJakartaSans-ExtraBold.ttf); }
+  @font-face { font-family: PJS; font-weight: 700; src: url(../../assets/fonts/PlusJakartaSans-Bold.ttf); }
+  @font-face { font-family: PJS; font-weight: 600; src: url(../../assets/fonts/PlusJakartaSans-SemiBold.ttf); }
+  @font-face { font-family: Pop; font-weight: 400; src: url(../../assets/fonts/Poppins-Regular.ttf); }
+  @font-face { font-family: Pop; font-weight: 500; src: url(../../assets/fonts/Poppins-Medium.ttf); }
+
+  /* Token dari lib/utils/theme.dart (ItsColors). */
+  :root {
+    --blue: #243F81; --blue-container: #D9E2FF; --on-blue-container: #233F7C;
+    --sky: #127BBE; --sky-container: #D3ECF8; --on-sky-container: #0B4A72;
+    --light-blue: #75BDE0; --yellow: #FDBB16; --yellow-container: #FFF7B3;
+    --ink: #1A1B20; --ink-muted: #44474F; --surface-low: #F2F3FA; --border: #ECEDF4;
+  }
+  html, body { margin: 0; background: #fff; }
+  .page { position: relative; width: 1900px; height: 2689px; overflow: hidden; background: #fff; color: var(--ink); }
+
+  /* Satu-satunya warna latar: wash tipis di pojok kanan atas + grain, memudar ke putih. */
+  .wash {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(1300px 1000px at 100% 0%, rgba(211,236,248,.95), rgba(211,236,248,0) 70%),
+      radial-gradient(700px 560px at 88% 30%, rgba(255,247,179,.75), rgba(255,247,179,0) 70%);
+  }
+  .grain {
+    position: absolute; inset: 0; opacity: .06; mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='400'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .14  0 0 0 0 .25  0 0 0 0 .5  0 0 0 1 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    -webkit-mask-image: radial-gradient(1400px 1100px at 100% 0%, #000, transparent 75%);
+            mask-image: radial-gradient(1400px 1100px at 100% 0%, #000, transparent 75%);
+  }
+
+  .x { position: absolute; left: 150px; right: 150px; }
+
+  .logo { top: 330px; width: 220px; height: 220px; right: auto;
+          filter: drop-shadow(0 18px 24px rgba(36,63,129,.18)); }
+
+  .hero { top: 700px; }
+  /* Chip seperti chipTheme: radius 8, sky container. */
+  .chip { display: inline-block; padding: 14px 28px; border-radius: 20px;
+          background: var(--sky-container); color: var(--on-sky-container);
+          font: 700 26px PJS; letter-spacing: 3px; }
+  .title { margin: 40px 0 0; font: 800 180px/1 PJS; letter-spacing: -5px; color: var(--blue); }
+  .tagline { margin: 28px 0 0; font: 400 44px Pop; color: var(--ink-muted); }
+  .accent { margin: 64px 0 48px; display: flex; gap: 12px; align-items: center; }
+  .accent b { width: 120px; height: 8px; border-radius: 4px; background: linear-gradient(90deg, var(--blue), var(--sky)); }
+  .accent i { width: 14px; height: 14px; border-radius: 50%; background: var(--yellow);
+              box-shadow: 0 0 16px rgba(253,187,22,.6); }
+  .course { font: 400 34px/1.6 Pop; color: var(--ink-muted); }
+  .course strong { font: 600 34px PJS; color: var(--ink); }
+
+  /* Kartu seperti cardTheme: putih, garis tipis, radius Large (16dp ~ 40px di halaman ini). */
+  .card { top: 1640px; padding: 24px 0; border: 2px solid var(--border); border-radius: 40px; background: #fff;
+          box-shadow: 0 24px 60px rgba(36,63,129,.07); }
+  .card-head { padding: 28px 56px 20px; display: flex; justify-content: space-between; align-items: center; }
+  .card-head h3 { margin: 0; font: 700 36px PJS; color: var(--ink); }
+  .card-head span { font: 500 26px Pop; color: var(--ink-muted); }
+  .row { display: flex; align-items: center; gap: 32px; padding: 24px 56px; }
+  .row + .row { border-top: 2px solid var(--border); }
+  .avatar { width: 84px; height: 84px; border-radius: 50%; display: grid; place-items: center; flex: none;
+            background: var(--blue-container); color: var(--on-blue-container); font: 700 34px PJS; }
+  .row:nth-child(odd) .avatar { background: var(--sky-container); color: var(--on-sky-container); }
+  .name { font: 600 34px PJS; }
+  .nrp { margin-top: 2px; font: 400 28px Pop; color: var(--ink-muted); }
+
+  .foot { bottom: 140px; display: flex; justify-content: space-between; font: 400 28px Pop; color: var(--ink-muted); }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="wash"></div>
+  <div class="grain"></div>
+
+  <img class="x logo" src="../../assets/images/logo_mark.png" alt="Logo Collab">
+
+  <div class="x hero">
+    <span class="chip">LAPORAN FINAL PROJECT</span>
+    <div class="title">Collab</div>
+    <div class="tagline">Kerja bareng, nilai adil</div>
+    <div class="accent"><b></b><i></i></div>
+    <div class="course"><strong>Teknologi Berkembang – C</strong><br>Aplikasi pencatat kontribusi tugas kelompok</div>
+  </div>
+
+  <div class="x card">
+    <div class="card-head"><h3>Kelompok 2</h3><span>4 anggota</span></div>
+    <div class="rows">
+      <div class="row"><div class="avatar">R</div><div><div class="name">Rezzel</div><div class="nrp">NRP 50XX 2XX XXX</div></div></div>
+      <div class="row"><div class="avatar">A</div><div><div class="name">Azka</div><div class="nrp">NRP 50XX 2XX XXX</div></div></div>
+      <div class="row"><div class="avatar">G</div><div><div class="name">Gergi</div><div class="nrp">NRP 50XX 2XX XXX</div></div></div>
+      <div class="row"><div class="avatar">F</div><div><div class="name">Farel</div><div class="nrp">NRP 50XX 2XX XXX</div></div></div>
+    </div>
+  </div>
+
+  <div class="x foot"><span>Institut Teknologi Sepuluh Nopember</span><span>2026</span></div>
+</div>
+</body>
+</html>

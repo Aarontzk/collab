@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Cover Laporan Collab</title>
+<style>
+  @font-face { font-family: PJS; font-weight: 800; src: url(../../assets/fonts/PlusJakartaSans-ExtraBold.ttf); }
+  @font-face { font-family: PJS; font-weight: 700; src: url(../../assets/fonts/PlusJakartaSans-Bold.ttf); }
+  @font-face { font-family: PJS; font-weight: 600; src: url(../../assets/fonts/PlusJakartaSans-SemiBold.ttf); }
+  @font-face { font-family: Pop; font-weight: 400; src: url(../../assets/fonts/Poppins-Regular.ttf); }
+  @font-face { font-family: Pop; font-weight: 500; src: url(../../assets/fonts/Poppins-Medium.ttf); }
+
+  :root {
+    --navy: #243F81; --navy-deep: #15265A; --sky: #127BBE;
+    --light: #75BDE0; --yellow: #FDBB16; --sky-container: #D3ECF8;
+  }
+  html, body { margin: 0; background: var(--navy-deep); }
+  .page {
+    position: relative; width: 1900px; height: 2689px; overflow: hidden; color: #fff;
+    background:
+      radial-gradient(900px 700px at 0% 0%, rgba(18,123,190,.55), transparent 70%),
+      radial-gradient(1100px 900px at 100% 100%, rgba(18,123,190,.35), transparent 70%),
+      linear-gradient(160deg, #2A4A92 0%, var(--navy) 40%, var(--navy-deep) 100%);
+  }
+
+  /* Glow orbs behind the big C */
+  .orb { position: absolute; border-radius: 50%; filter: blur(120px); }
+  .orb.blue   { width: 900px; height: 700px; left: 820px; top: 420px;  background: rgba(117,189,224,.45); }
+  .orb.yellow { width: 800px; height: 620px; left: 880px; top: 1350px; background: rgba(253,187,22,.32); }
+  .orb.white  { width: 600px; height: 260px; left: 980px; top: 520px; background: rgba(255,255,255,.18); }
+
+  /* Fine concentric rings echoing the C */
+  .rings { position: absolute; inset: 0; }
+
+  .bigc { position: absolute; inset: 0; }
+  .logo-big { position: absolute; left: 518px; top: 564px; width: 1373px; height: 1373px; }
+  .logo-big i { position: absolute; inset: 0;
+                -webkit-mask-size: 100% 100%; mask-size: 100% 100%; }
+  .logo-big .top { background: linear-gradient(180deg, #9FD3EE, #4FA3D6);
+                   -webkit-mask-image: url(logo_top_mask.png); mask-image: url(logo_top_mask.png); }
+  .logo-big .bot { background: linear-gradient(180deg, #FDBB16, #F29A0E);
+                   -webkit-mask-image: url(logo_bottom_mask.png); mask-image: url(logo_bottom_mask.png); }
+  .logo-big.glow { filter: blur(40px); opacity: .7; }
+  .logo-big.main { filter: drop-shadow(0 40px 40px rgba(6,16,47,.55)); }
+
+
+  /* Grain texture over everything */
+  .grain {
+    position: absolute; inset: 0; pointer-events: none; mix-blend-mode: soft-light; opacity: .55;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='400'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  }
+
+  /* Top bar */
+  .top { position: absolute; top: 130px; left: 150px; right: 150px; display: flex; justify-content: space-between; align-items: center;
+         font: 600 26px PJS; letter-spacing: 6px; color: rgba(255,255,255,.75); }
+  .top .brand { display: flex; align-items: center; gap: 18px; letter-spacing: 0; font: 800 40px PJS; color: #fff; }
+  .top .brand img { width: 60px; height: 60px; filter: drop-shadow(0 0 18px rgba(117,189,224,.6)); }
+
+  /* Glass card */
+  .card {
+    position: absolute; left: 150px; top: 980px; width: 1010px; padding: 90px 90px 96px;
+    border-radius: 56px;
+    background: linear-gradient(145deg, rgba(255,255,255,.20), rgba(255,255,255,.06));
+    backdrop-filter: blur(46px) saturate(150%);
+    border: 2px solid rgba(255,255,255,.28);
+    box-shadow:
+      0 50px 100px rgba(6,16,48,.55),
+      0 0 0 1px rgba(255,255,255,.04),
+      inset 0 2px 0 rgba(255,255,255,.45),
+      inset 0 -40px 80px rgba(18,123,190,.18);
+  }
+  .eyebrow { font: 700 28px PJS; letter-spacing: 9px; color: var(--yellow);
+             text-shadow: 0 0 24px rgba(253,187,22,.55); }
+  .title { margin: 26px 0 0; font: 800 168px/1 PJS; letter-spacing: -4px;
+           background: linear-gradient(180deg, #fff 30%, var(--sky-container));
+           -webkit-background-clip: text; background-clip: text; color: transparent;
+           filter: drop-shadow(0 10px 30px rgba(6,16,48,.45)); }
+  .tagline { margin: 22px 0 0; font: 500 42px Pop; color: var(--sky-container); }
+  .divider { margin: 56px 0 46px; width: 260px; height: 8px; border-radius: 4px;
+             background: linear-gradient(90deg, var(--yellow), var(--light));
+             box-shadow: 0 0 22px rgba(253,187,22,.6), 0 0 44px rgba(117,189,224,.35); }
+  .desc { font: 400 32px/1.6 Pop; color: rgba(255,255,255,.82); max-width: 760px; }
+
+  /* Members */
+  .team { position: absolute; left: 150px; right: 150px; top: 2000px; }
+  .team .eyebrow { color: var(--light); text-shadow: 0 0 24px rgba(117,189,224,.5); }
+  .grid { margin-top: 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 34px 80px; }
+  .member { display: flex; align-items: center; gap: 26px; }
+  .member .dot { width: 18px; height: 18px; border-radius: 50%; flex: none; }
+  .member:nth-child(odd) .dot  { background: var(--light);  box-shadow: 0 0 18px var(--light); }
+  .member:nth-child(even) .dot { background: var(--yellow); box-shadow: 0 0 18px var(--yellow); }
+  .member b { display: block; font: 700 38px PJS; }
+  .member span { font: 400 28px Pop; color: rgba(255,255,255,.62); }
+
+  .foot { position: absolute; left: 150px; right: 150px; bottom: 120px; padding-top: 40px;
+          display: flex; justify-content: space-between; font: 500 28px Pop; color: rgba(255,255,255,.7);
+          border-top: 2px solid; border-image: linear-gradient(90deg, rgba(255,255,255,.4), rgba(255,255,255,0)) 1; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="orb blue"></div>
+  <div class="orb white"></div>
+  <div class="orb yellow"></div>
+
+  <svg class="bigc" width="1900" height="2689" viewBox="0 0 1900 2689">
+    <g fill="none" stroke="#fff" stroke-opacity=".07" stroke-width="2">
+      <circle cx="1180" cy="1250" r="820"/>
+      <circle cx="1180" cy="1250" r="1000"/>
+      <circle cx="1180" cy="1250" r="1180"/>
+    </g>
+  </svg>
+
+  <!-- Logo asli (logo_mark.png) dipakai sebagai mask, jadi bentuknya persis. -->
+  <div class="logo-big glow"><i class="top"></i><i class="bot"></i></div>
+  <div class="logo-big main"><i class="top"></i><i class="bot"></i></div>
+
+  <div class="top">
+    <div class="brand"><img src="../../assets/images/logo_mark.png" alt="">Collab</div>
+    <div>2026 / 2027</div>
+  </div>
+
+  <div class="card">
+    <div class="eyebrow">LAPORAN FINAL PROJECT</div>
+    <div class="title">Collab</div>
+    <div class="tagline">Kerja bareng, nilai adil</div>
+    <div class="divider"></div>
+    <div class="desc">Teknologi Berkembang – C<br>Aplikasi pencatat kontribusi tugas kelompok berbasis Flutter dan Supabase</div>
+  </div>
+
+  <div class="team">
+    <div class="eyebrow">KELOMPOK 2</div>
+    <div class="grid">
+      <div class="member"><i class="dot"></i><div><b>Rezzel</b><span>NRP 50XX 2XX XXX</span></div></div>
+      <div class="member"><i class="dot"></i><div><b>Azka</b><span>NRP 50XX 2XX XXX</span></div></div>
+      <div class="member"><i class="dot"></i><div><b>Gergi</b><span>NRP 50XX 2XX XXX</span></div></div>
+      <div class="member"><i class="dot"></i><div><b>Farel</b><span>NRP 50XX 2XX XXX</span></div></div>
+    </div>
+  </div>
+
+  <div class="foot"><span>Institut Teknologi Sepuluh Nopember</span><span>Surabaya · 2026</span></div>
+
+  <div class="grain"></div>
+</div>
+</body>
+</html>
