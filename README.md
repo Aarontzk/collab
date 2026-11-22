@@ -101,7 +101,7 @@ Sesuai proposal (bagian 3.3 Pembagian Screen per Anggota):
 | 1 | Azka | Login, Daftar, Profil, Pengaturan, Notifikasi + kerangka app, tema, skema database |
 | 2 | Farel | Daftar Kelompok, Beranda, Tambah/Buat/Gabung Kelompok, Info Kelompok |
 | 3 | Aludra | Papan Tugas, Rapat, Jadwalkan Rapat, Detail Kehadiran |
-| 4 | Gergi | Detail Tugas, Tambah Bukti Kerja, Tolak Tugas |
+| 4 | Geri | Detail Tugas, Tambah Bukti Kerja, Tolak Tugas |
 | 5 | Rezzel | Form Tugas, Kode QR Rapat, Matriks Penilaian, Pilih PIC & Tenggat |
 | 6 | Maria | Kontribusi, Detail Kontribusi, Cara Menghitung Skor, Ekspor PDF |
 | 7 | Zahra | Peer Review, Pindai QR |
@@ -121,7 +121,7 @@ Sesuai proposal (bagian 3.3 Pembagian Screen per Anggota):
 | Ubah & hapus tugas | ✅ |
 | Ubah & hapus rapat, bukti kerja, peer review | ✅ |
 | Notifikasi pengingat deadline | ✅ |
-| Upload bukti file/foto ke Storage | ⬜ Gergi |
+| Upload bukti file/foto ke Storage | ⬜ Geri |
 | Grafik kontribusi + export PDF | ⬜ Maria |
 
 ## Setup
@@ -146,24 +146,6 @@ Perintah lain dari PPT:
 | `flutter test` | Jalankan semua test di folder `test/` |
 | `flutter pub get` | Unduh dependencies |
 | `flutter clean` | Bersihkan cache build kalau ada error aneh |
-
-## Pengumpulan (dari PPT)
-
-**Laporan kelompok** (link Drive, nama file `NamaKelompok_Collab.pdf`, contoh `Kelompok15_Collab.pdf`), isinya:
-1. Cover dan nama anggota
-2. Daftar isi
-3. Nama dan deskripsi aplikasi
-4. Rencana fitur dan screen aplikasi
-5. Progress (UI Figma atau kode Dart)
-6. Halaman terakhir: tabel kontribusi anggota (tanggal, nama, kontribusi)
-
-**Logbook** (satu spreadsheet kelompok, week 11–14, submit ulang linknya tiap minggu di intip.in/ProgressKelompokTEKBER26). Isi tiap minggu:
-- Pembagian tugas tiap anggota
-- Yang dikerjakan
-- Hambatan
-- Rencana minggu depan
-
-Update logbook dulu sebelum submit. Anggota yang tidak berkontribusi tidak dapat nilai kelompok untuk weekly progress.
 
 ## Aturan Git
 
