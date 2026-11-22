@@ -1098,3 +1098,105 @@ class MoreMenu extends StatelessWidget {
     );
   }
 }
+
+/// Dialog konfirmasi bergaya Figma (ikon, judul, pesan, Batal/aksi).
+/// Mengembalikan `true` kalau tombol aksi ditekan.
+Future<bool?> showConfirmDialog(
+  BuildContext context, {
+  required IconData icon,
+  required String title,
+  required String message,
+  required String confirmLabel,
+  bool danger = false,
+}) => showDialog<bool>(
+  context: context,
+  builder: (_) => _ConfirmDialog(
+    icon: icon,
+    danger: danger,
+    title: title,
+    message: message,
+    confirmLabel: confirmLabel,
+  ),
+);
+
+class _ConfirmDialog extends StatelessWidget {
+  const _ConfirmDialog({
+    required this.icon,
+    required this.title,
+    required this.message,
+    required this.confirmLabel,
+    this.danger = false,
+  });
+
+  final IconData icon;
+  final String title;
+  final String message;
+  final String confirmLabel;
+  final bool danger;
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                IconBadge(
+                  icon,
+                  size: IconBadge.sectionSize,
+                  background: danger
+                      ? CColors.errorContainer
+                      : ItsColors.blueContainer,
+                  color: danger ? CColors.error : ItsColors.blue,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: CText.stat.copyWith(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(message, style: CText.meta.copyWith(fontSize: 15)),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(0, 48),
+                    ),
+                    onPressed: () => Navigator.pop(context, false),
+                    child: const Text('Batal'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size(0, 48),
+                      backgroundColor: danger ? CColors.error : null,
+                    ),
+                    onPressed: () => Navigator.pop(context, true),
+                    child: Text(confirmLabel),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
