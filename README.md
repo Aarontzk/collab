@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/images/logo.png" alt="Logo Collab" width="112">
+  <img src="docs/readme/logo.png" alt="Logo Collab" width="112">
 </p>
 
 <h1 align="center">Collab</h1>
@@ -39,10 +39,10 @@
 
 | | Fitur | Isinya |
 |:-:|---|---|
-| <img src="assets/images/icons/tasks.png" width="48" height="48"> | **Tugas** | Ketua bagi tugas dengan PIC, bobot, dan deadline. Anggota upload bukti, lalu divalidasi teman lain. |
-| <img src="assets/images/icons/meeting.png" width="48" height="48"> | **Rapat** | Ketua jadwalkan rapat. QR absen berganti tiap 30 detik, jadi tidak bisa titip absen. |
-| <img src="assets/images/icons/review.png" width="48" height="48"> | **Peer review** | Tiap minggu anggota saling menilai secara anonim. |
-| <img src="assets/images/icons/contribution.png" width="48" height="48"> | **Kontribusi** | Semua data dihitung jadi skor. Anggota yang jauh di bawah rata-rata dapat tanda ⚠️. |
+| <img src="docs/readme/tugas.png" width="48" height="48"> | **Tugas** | Ketua bagi tugas dengan PIC, bobot, dan deadline. Anggota upload bukti, lalu divalidasi teman lain. |
+| <img src="docs/readme/rapat.png" width="48" height="48"> | **Rapat** | Ketua jadwalkan rapat. QR absen berganti tiap 30 detik, jadi tidak bisa titip absen. |
+| <img src="docs/readme/review.png" width="48" height="48"> | **Peer review** | Tiap minggu anggota saling menilai secara anonim. |
+| <img src="docs/readme/kontribusi.png" width="48" height="48"> | **Kontribusi** | Semua data dihitung jadi skor. Anggota yang jauh di bawah rata-rata dapat tanda ⚠️. |
 
 ## Nama dan deskripsi aplikasi
 
@@ -51,17 +51,6 @@
 **Pengguna.** Mahasiswa yang mengerjakan tugas kelompok (ketua dan anggota), serta dosen yang ingin melihat kontribusi tiap anggota.
 
 **Cara Collab membantu.** Setiap tugas punya PIC, bobot, deadline, dan bukti pengerjaan yang divalidasi anggota lain. Absensi rapat memakai QR yang berganti terus, ada peer review anonim, lalu semua data itu dihitung menjadi **skor kontribusi** tiap anggota. Anggota yang skornya jauh di bawah rata-rata diberi tanda ⚠️.
-
-## Syarat minimal ide (dari PPT Week 2)
-
-| Syarat | Di Collab |
-|---|---|
-| Masalah, pengguna, dan solusi tertulis | ✅ Lihat bagian di atas |
-| Minimal 5 layar berbeda (splash tidak dihitung) | ✅ 12 layar, lihat `lib/screens/` |
-| Data disimpan dan ditampilkan kembali, minimal 2 jenis data yang saling berhubungan | ✅ Kelompok → anggota → tugas → bukti & validasi, rapat → absensi, peer review |
-| Tambah, lihat, ubah, hapus minimal satu jenis data | ✅ Tugas: tambah, lihat, ubah, hapus (ubah & hapus khusus ketua, selama tugas belum disetujui) |
-| Pekerjaan bisa dibagi ke seluruh anggota | ✅ Lihat tabel pembagian tugas |
-| Database Supabase atau Firebase | ✅ Supabase |
 
 ## Rencana fitur dan screen
 
@@ -129,7 +118,7 @@ Sesuai proposal (bagian 3.3 Pembagian Screen per Anggota):
 | Rapat + QR berganti tiap 30 detik + scan absen | ✅ |
 | Peer review anonim mingguan | ✅ |
 | Skor kontribusi + tanda ⚠️ | ✅ |
-| Ubah & hapus tugas (syarat CRUD) | ✅ |
+| Ubah & hapus tugas | ✅ |
 | Ubah & hapus rapat, bukti kerja, peer review | ✅ |
 | Notifikasi pengingat deadline | ✅ |
 | Upload bukti file/foto ke Storage | ⬜ Gergi |
