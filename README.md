@@ -1,6 +1,48 @@
-# 🤝 Collab: Kerja bareng, nilai adil
+<p align="center">
+  <img src="assets/images/logo.png" alt="Logo Collab" width="112">
+</p>
 
-Final Project Teknologi Berkembang 2026/2027 · Flutter + Supabase
+<h1 align="center">Collab</h1>
+
+<p align="center">
+  <b>Kerja bareng, nilai adil.</b><br>
+  Aplikasi pencatat kontribusi tugas kelompok: siapa mengerjakan apa, lengkap dengan buktinya.
+</p>
+
+<p align="center">
+  <img alt="Flutter" src="https://img.shields.io/badge/Flutter-3-02569B?logo=flutter&logoColor=white">
+  <img alt="Dart" src="https://img.shields.io/badge/Dart-3-0175C2?logo=dart&logoColor=white">
+  <img alt="Supabase" src="https://img.shields.io/badge/Supabase-Postgres%20%2B%20RLS-3FCF8E?logo=supabase&logoColor=white">
+  <img alt="Platform" src="https://img.shields.io/badge/platform-Android-3DDC84?logo=android&logoColor=white">
+</p>
+
+<p align="center">
+  Final Project Teknologi Berkembang C · Kelompok 2 · ITS 2026
+</p>
+
+## Tampilan aplikasi
+
+<table align="center">
+  <tr>
+    <td align="center"><img src="docs/screenshots/beranda.png" width="200" alt="Beranda"><br><sub><b>Beranda</b><br>Ringkasan kelompok</sub></td>
+    <td align="center"><img src="docs/screenshots/tugas.png" width="200" alt="Papan tugas"><br><sub><b>Papan Tugas</b><br>PIC, bobot, deadline</sub></td>
+    <td align="center"><img src="docs/screenshots/detail_tugas.png" width="200" alt="Detail tugas"><br><sub><b>Detail Tugas</b><br>Bukti kerja & validasi</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/rapat.png" width="200" alt="Rapat"><br><sub><b>Rapat</b><br>Absen pakai QR</sub></td>
+    <td align="center"><img src="docs/screenshots/review.png" width="200" alt="Peer review"><br><sub><b>Peer Review</b><br>Penilaian anonim</sub></td>
+    <td align="center"><img src="docs/screenshots/kontribusi.png" width="200" alt="Kontribusi"><br><sub><b>Kontribusi</b><br>Skor tiap anggota</sub></td>
+  </tr>
+</table>
+
+## Fitur utama
+
+| | Fitur | Isinya |
+|:-:|---|---|
+| <img src="assets/images/icons/tasks.png" width="48" height="48"> | **Tugas** | Ketua bagi tugas dengan PIC, bobot, dan deadline. Anggota upload bukti, lalu divalidasi teman lain. |
+| <img src="assets/images/icons/meeting.png" width="48" height="48"> | **Rapat** | Ketua jadwalkan rapat. QR absen berganti tiap 30 detik, jadi tidak bisa titip absen. |
+| <img src="assets/images/icons/review.png" width="48" height="48"> | **Peer review** | Tiap minggu anggota saling menilai secara anonim. |
+| <img src="assets/images/icons/contribution.png" width="48" height="48"> | **Kontribusi** | Semua data dihitung jadi skor. Anggota yang jauh di bawah rata-rata dapat tanda ⚠️. |
 
 ## Nama dan deskripsi aplikasi
 
@@ -63,15 +105,17 @@ Aturannya: **screen tidak boleh memanggil Supabase langsung**, selalu lewat file
 
 ## Pembagian tugas
 
-| Anggota | Bagian |
-|---|---|
-| 1 | Login, daftar, kelompok (`login`, `register`, `groups`, `group_home`, `auth_service`, `group_service`) + `supabase/schema.sql` |
-| 2 | Task board & form tugas (`task_board`, `task_form`, `task_service`) |
-| 3 | Detail tugas, upload bukti file/foto ke Storage, validasi (`task_detail`, `task_dialogs`) |
-| 4 | Rapat & absensi QR (`meetings`, `meeting_qr`, `scan_qr`, `meeting_service`) |
-| 5 | Peer review anonim (`peer_review_screen`, `peer_review_service`) |
-| 6 | Skor kontribusi, grafik `fl_chart`, export PDF (`contribution_screen`, `models/contribution.dart`) |
-| 7 | Desain UI di Figma, tema (`utils/theme.dart`), notifikasi pengingat deadline |
+Sesuai proposal (bagian 3.3 Pembagian Screen per Anggota):
+
+| # | Anggota | Screen |
+|:-:|---|---|
+| 1 | Azka | Login, Daftar, Profil, Pengaturan, Notifikasi + kerangka app, tema, skema database |
+| 2 | Farel | Daftar Kelompok, Beranda, Tambah/Buat/Gabung Kelompok, Info Kelompok |
+| 3 | Aludra | Papan Tugas, Rapat, Jadwalkan Rapat, Detail Kehadiran |
+| 4 | Gergi | Detail Tugas, Tambah Bukti Kerja, Tolak Tugas |
+| 5 | Rezzel | Form Tugas, Kode QR Rapat, Matriks Penilaian, Pilih PIC & Tenggat |
+| 6 | Maria | Kontribusi, Detail Kontribusi, Cara Menghitung Skor, Ekspor PDF |
+| 7 | Zahra | Peer Review, Pindai QR |
 
 ## Status fitur
 
@@ -86,9 +130,10 @@ Aturannya: **screen tidak boleh memanggil Supabase langsung**, selalu lewat file
 | Peer review anonim mingguan | ✅ |
 | Skor kontribusi + tanda ⚠️ | ✅ |
 | Ubah & hapus tugas (syarat CRUD) | ✅ |
-| Upload bukti file/foto ke Storage | ⬜ Anggota 3 |
-| Grafik kontribusi + export PDF | ⬜ Anggota 6 |
-| Desain UI sesuai Figma + notifikasi | ⬜ Anggota 7 |
+| Ubah & hapus rapat, bukti kerja, peer review | ✅ |
+| Notifikasi pengingat deadline | ✅ |
+| Upload bukti file/foto ke Storage | ⬜ Gergi |
+| Grafik kontribusi + export PDF | ⬜ Maria |
 
 ## Setup
 
