@@ -52,22 +52,50 @@
 
 **Cara Collab membantu.** Setiap tugas punya PIC, bobot, deadline, dan bukti pengerjaan yang divalidasi anggota lain. Absensi rapat memakai QR yang berganti terus, ada peer review anonim, lalu semua data itu dihitung menjadi **skor kontribusi** tiap anggota. Anggota yang skornya jauh di bawah rata-rata diberi tanda ⚠️.
 
-## Rencana fitur dan screen
+## Daftar screen
 
-| Screen | File | Fungsi |
+Semua ada di `lib/screens/`.
+
+| Bagian | Screen | File |
 |---|---|---|
-| Login | `login_screen.dart` | Masuk dengan email & password |
-| Daftar | `register_screen.dart` | Buat akun baru |
-| Daftar kelompok | `groups_screen.dart` | Lihat kelompok, buat atau gabung pakai kode |
-| Beranda kelompok | `group_home_screen.dart` | 4 tab: tugas, rapat, peer review, kontribusi |
-| Task board | `task_board_screen.dart` | Daftar tugas realtime + filter "Tugasku" |
-| Form tugas | `task_form_screen.dart` | Tambah dan ubah tugas (PIC, bobot, deadline) |
-| Detail tugas | `task_detail_screen.dart` | Bukti kerja, submit, validasi, tombol ubah/hapus untuk ketua |
-| Rapat | `meetings_screen.dart` | Daftar rapat dan absensi |
-| QR rapat | `meeting_qr_screen.dart` | QR absen yang berganti tiap 30 detik |
-| Scan QR | `scan_qr_screen.dart` | Anggota scan untuk absen |
-| Peer review | `peer_review_screen.dart` | Nilai anggota lain secara anonim |
-| Kontribusi | `contribution_screen.dart` | Skor kontribusi tiap anggota + tanda ⚠️ |
+| Akun | Welcome (layar pembuka) | `welcome_screen.dart` |
+| | Login | `login_screen.dart` |
+| | Daftar | `register_screen.dart` |
+| | Verifikasi email | `verify_email_screen.dart` |
+| | Lupa kata sandi | `forgot_password_screen.dart` |
+| | Kata sandi baru | `new_password_screen.dart` |
+| | Profil | `profile_screen.dart` |
+| | Pengaturan | `settings_screen.dart` |
+| Kelompok | Daftar kelompok + tenggat terdekat | `groups_screen.dart` |
+| | Beranda kelompok + info kelompok | `group_home_screen.dart` |
+| Tugas | Papan tugas | `task_board_screen.dart` |
+| | Form tugas (tambah/ubah) | `task_form_screen.dart` |
+| | Detail tugas, bukti kerja, validasi | `task_detail_screen.dart` |
+| Rapat | Daftar rapat + jadwalkan rapat | `meetings_screen.dart` |
+| | Detail kehadiran | `meeting_detail_screen.dart` |
+| | QR rapat (HP ketua) | `meeting_qr_screen.dart` |
+| | Pindai QR absen | `scan_qr_screen.dart` |
+| Review | Peer review | `peer_review_screen.dart` |
+| Kontribusi | Skor kontribusi | `contribution_screen.dart` |
+| | Detail kontribusi anggota | `contribution_detail_screen.dart` |
+| Notifikasi | Pusat notifikasi | `notifications_screen.dart` |
+| | Izin notifikasi | `notification_permission_screen.dart` |
+| | Pengaturan pengingat | `reminder_settings_screen.dart` |
+
+## CRUD
+
+| Data | Create | Read | Update | Delete |
+|---|:-:|:-:|:-:|:-:|
+| Kelompok | ✅ Buat / gabung pakai kode | ✅ | ✅ Ketua | ✅ Ketua (anggota bisa keluar) |
+| Tugas | ✅ Ketua | ✅ | ✅ Ketua, selama belum disetujui | ✅ Ketua, selama belum disetujui |
+| Bukti kerja | ✅ PIC | ✅ | – | ✅ PIC, sebelum tugas diajukan |
+| Validasi tugas | ✅ Anggota lain | ✅ | – | – |
+| Rapat | ✅ Ketua | ✅ | ✅ Ketua, sebelum rapat mulai | ✅ Ketua, sebelum rapat mulai |
+| Absensi | ✅ Pindai QR | ✅ | – | – |
+| Peer review | ✅ | ✅ Anonim | ✅ Minggu yang sama | ✅ Minggu yang sama |
+| Profil | ✅ Saat daftar | ✅ | ✅ Nama & NRP | – |
+
+Aturan siapa boleh apa juga dijaga di database lewat RLS (`supabase/schema.sql`), bukan cuma di UI.
 
 ## Struktur folder
 
