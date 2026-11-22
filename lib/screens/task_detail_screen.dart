@@ -11,7 +11,9 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'package:collab/models/task_detail_data.dart';
 import 'package:collab/screens/task_form_screen.dart';
+import 'package:collab/services/task_detail_service.dart';
 import 'package:collab/utils/dates.dart';
+import 'package:collab/utils/errors.dart';
 import 'package:collab/utils/theme.dart';
 import 'package:collab/widgets/common_widgets.dart';
 import 'package:collab/widgets/task_dialogs.dart';
@@ -45,53 +47,18 @@ TextStyle _text(
 /// - Belum mulai: PIC menekan "Mulai kerjakan", bagian bukti terkunci.
 /// - Dikerjakan: PIC menambah bukti lalu "Ajukan validasi".
 /// - Menunggu validasi: anggota lain (bukan PIC) "Setujui" atau "Tolak".
-/// - Ditolak: PIC memperbarui bukti lalu "Kirim ulang validasi".
-/// - Disetujui: selesai, dihitung ke skor kontribusi.
+/// - Ditolak: PIC mengganti bukti lalu "Kirim ulang validasi".
+/// - Disetujui: selesai, dihitung ke skor kontribusi (terkunci).
 ///
-/// Ketua kelompok ([isLeader]) mendapat ikon ubah dan hapus tugas.
+/// Peran (PIC, ketua, boleh memvalidasi) datang dari [service], bukan dari
+/// parameter. Setiap aksi dikirim ke server, lalu tampilan memakai data
+/// terbaru yang dikembalikan. Status Disetujui/Ditolak ditentukan database.
+///
+/// Menutup layar dengan hasil `true` berarti tugas dihapus.
 class TaskDetailScreen extends StatefulWidget {
-  const TaskDetailScreen({
-    super.key,
-    required this.task,
-    this.isPic = false,
-    this.isLeader = false,
-    this.myName = 'Kamu',
-    this.members = const [],
-    this.onSaveEdit,
-    this.onChanged,
-    this.onDeleted,
-    this.signedUrlFor,
-    this.openUrl,
-  });
+  const TaskDetailScreen({super.key, required this.service, this.openUrl});
 
-  final TaskDetailData task;
-
-  /// Pengguna adalah penanggung jawab (PIC) tugas ini.
-  final bool isPic;
-
-  /// Pengguna adalah ketua kelompok.
-  final bool isLeader;
-
-  /// Nama pengguna, dicatat sebagai validator saat menyetujui atau menolak.
-  final String myName;
-
-  /// Anggota kelompok yang bisa dipilih jadi PIC di form ubah tugas.
-  final List<TaskFormMember> members;
-
-  /// Menyimpan hasil form ubah tugas (isi pemanggil lewat task service ke
-  /// Supabase). Tampilan di layar ini ikut diperbarui setelah berhasil.
-  final Future<void> Function(TaskFormValue value)? onSaveEdit;
-
-  /// Dipanggil setiap data tugas berubah (mulai, bukti, ajukan, validasi).
-  final ValueChanged<TaskDetailData>? onChanged;
-
-  /// Dipanggil setelah ketua mengonfirmasi hapus tugas.
-  final VoidCallback? onDeleted;
-
-  /// Meminta signed URL untuk foto/file di bucket privat "evidences", mis.
-  /// `supabase.storage.from('evidences').createSignedUrl(path, 3600)`.
-  /// Kosong = foto/file dari Storage belum bisa dibuka.
-  final Future<String> Function(String storagePath)? signedUrlFor;
+  final TaskDetailService service;
 
   /// Membuka tautan di luar aplikasi. Bawaan: `launchUrl` (browser).
   /// Diganti hanya untuk tes.
@@ -102,40 +69,75 @@ class TaskDetailScreen extends StatefulWidget {
 }
 
 class _TaskDetailScreenState extends State<TaskDetailScreen> {
-  late TaskDetailData _task = widget.task;
+  TaskDetailLoad? _data;
+  Object? _error;
 
-  /// Ada aksi (dialog, pemilih foto/file, buka bukti) yang sedang berjalan.
-  /// Ditandai langsung (tanpa menunggu rebuild) supaya tekan dua kali cepat
-  /// tidak membuka dua sheet atau dua pemilih file.
+  /// Bukti yang sudah diunggah ke Storage tapi baris `task_evidences`-nya baru
+  /// dibuat saat Ajukan validasi (baris bukti tidak bisa diubah setelahnya,
+  /// jadi catatan harus ikut saat dibuat).
+  final List<EvidenceItem> _pending = [];
+
+  /// Ada aksi (dialog, pemilih foto/file, kirim ke server) yang sedang
+  /// berjalan. Ditandai langsung (tanpa menunggu rebuild) supaya tekan dua kali
+  /// cepat tidak membuka dua sheet atau mengirim dua kali.
   bool _busy = false;
+
+  /// Foto/file sedang diunggah ke Storage.
+  bool _uploading = false;
   final _note = TextEditingController();
 
+  TaskDetailData get _task => _data!.task;
   TaskDetailStatus get _status => _task.status;
+  bool get _isPic => _data!.isPic;
+  bool get _isLeader => _data!.isLeader;
+
+  /// Bukti tersimpan ditambah bukti baru yang menunggu diajukan.
+  List<EvidenceItem> get _evidences => [..._task.evidences, ..._pending];
 
   /// Bukti bisa ditambah atau dihapus oleh PIC saat Dikerjakan, dan saat
   /// tugas Ditolak (PIC langsung memperbaiki bukti tanpa langkah tambahan).
   bool get _canEditEvidence =>
-      widget.isPic &&
+      _isPic &&
       (_status == TaskDetailStatus.inProgress ||
           _status == TaskDetailStatus.rejected);
 
-  bool get _hasValidated =>
-      _task.validations.any((v) => v.validatorName == widget.myName);
-
-  /// PIC tidak boleh memvalidasi tugasnya sendiri, dan satu orang satu suara.
-  bool get _canValidate =>
-      !widget.isPic && _status == TaskDetailStatus.submitted && !_hasValidated;
+  /// Dari server: mahasiswa, bukan PIC, belum memberi suara, status Menunggu
+  /// validasi.
+  bool get _canValidate => _data!.canValidate;
 
   @override
   void initState() {
     super.initState();
-    _note.text = _task.workNote;
+    _reload();
   }
 
   @override
   void dispose() {
     _note.dispose();
     super.dispose();
+  }
+
+  Future<void> _reload() async {
+    try {
+      final data = await widget.service.load();
+      if (mounted) _setData(data);
+    } catch (e) {
+      if (!mounted) return;
+      // Kalau data sudah tampil (tarik untuk muat ulang), cukup beri tahu.
+      if (_data == null) {
+        setState(() => _error = e);
+      } else {
+        showError(context, e);
+      }
+    }
+  }
+
+  void _setData(TaskDetailLoad data) {
+    setState(() {
+      _data = data;
+      _error = null;
+    });
+    if (_note.text.isEmpty) _note.text = data.task.workNote;
   }
 
   /// Jalankan [action] satu per satu. Tombol ikut nonaktif selama berjalan.
@@ -149,14 +151,23 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     }
   }
 
-  void _update(TaskDetailData next) {
-    setState(() => _task = next);
-    widget.onChanged?.call(next);
+  /// Kirim aksi ke server dan pakai data terbaru dari jawabannya. Mengembalikan
+  /// true kalau berhasil; kalau gagal, errornya ditampilkan.
+  Future<bool> _apply(Future<TaskDetailLoad> Function() op) async {
+    try {
+      final data = await op();
+      if (!mounted) return false;
+      _setData(data);
+      return true;
+    } catch (e) {
+      if (mounted) showError(context, e);
+      return false;
+    }
   }
 
   // ---------- Aksi PIC ----------
 
-  void _start() => _update(_task.copyWith(status: TaskDetailStatus.inProgress));
+  Future<void> _start() => _apply(widget.service.start);
 
   Future<void> _addEvidence() async {
     final source = await showAddEvidenceSheet(context);
@@ -174,15 +185,17 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
   Future<void> _addLink() async {
     final url = await showAddLinkDialog(context);
     if (url == null) return;
-    _appendEvidence(
-      EvidenceItem(
-        kind: EvidenceKind.link,
-        title: url.replaceFirst(
-          RegExp(r'^https?://', caseSensitive: false),
-          '',
+    setState(
+      () => _pending.add(
+        EvidenceItem(
+          kind: EvidenceKind.link,
+          title: url.replaceFirst(
+            RegExp(r'^https?://', caseSensitive: false),
+            '',
+          ),
+          subtitle: 'Tautan · ${formatDateTime(DateTime.now())}',
+          localPath: url,
         ),
-        subtitle: 'Tautan · ${formatDateTime(DateTime.now())}',
-        localPath: url,
       ),
     );
   }
@@ -201,8 +214,12 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
       }
       final picked = await picker.pickImage(source: source);
       if (picked == null) return;
-      final size = await picked.length();
-      _addPickedFile(picked.name, size, picked.path, EvidenceKind.image);
+      await _upload(
+        picked.name,
+        await picked.readAsBytes(),
+        picked.path,
+        EvidenceKind.image,
+      );
     } catch (e) {
       if (mounted) showError(context, e);
     }
@@ -215,43 +232,68 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
         allowedExtensions: const ['pdf', 'zip', 'docx', 'pptx', 'xlsx'],
       );
       if (picked == null) return;
-      final size = await picked.length() ?? 0;
-      _addPickedFile(picked.name, size, picked.path, EvidenceKind.file);
+      await _upload(
+        picked.name,
+        await picked.readAsBytes(),
+        picked.path,
+        EvidenceKind.file,
+      );
     } catch (e) {
       if (mounted) showError(context, e);
     }
   }
 
-  void _addPickedFile(String name, int bytes, String? path, EvidenceKind kind) {
+  /// Unggah ke Storage lebih dulu supaya jenis dan ukuran file ditolak sejak
+  /// awal; baris bukti baru dibuat saat [_submit].
+  Future<void> _upload(
+    String name,
+    Uint8List bytes,
+    String? path,
+    EvidenceKind kind,
+  ) async {
     if (!mounted) return;
-    if (bytes > _maxFileBytes) {
+    if (bytes.length > _maxFileBytes) {
       showMessage(context, 'Ukuran file maksimal 10 MB.', isError: true);
       return;
     }
-    // TODO(geri): unggah ke bucket "evidences" di Supabase Storage dengan
-    // path {group_id}/{task_id}/{nama_file}, lalu simpan path-nya di
-    // task_evidences.url. Sementara hanya disimpan di perangkat.
-    _appendEvidence(
-      EvidenceItem(
-        kind: kind,
-        title: name,
-        subtitle:
-            '${_formatSize(bytes)} · '
-            '${kind == EvidenceKind.image ? 'Foto' : 'File'} di Storage',
-        localPath: path,
-      ),
-    );
+    setState(() => _uploading = true);
+    try {
+      final storagePath = await widget.service.uploadEvidence(
+        fileName: name,
+        bytes: bytes,
+      );
+      if (!mounted) return;
+      setState(
+        () => _pending.add(
+          EvidenceItem(
+            kind: kind,
+            title: name,
+            subtitle:
+                '${_formatSize(bytes.length)} · '
+                '${kind == EvidenceKind.image ? 'Foto' : 'File'} di Storage',
+            localPath: path,
+            storagePath: storagePath,
+          ),
+        ),
+      );
+    } catch (e) {
+      if (mounted) showError(context, e);
+    } finally {
+      if (mounted) setState(() => _uploading = false);
+    }
   }
 
-  void _appendEvidence(EvidenceItem item) =>
-      _update(_task.copyWith(evidences: [..._task.evidences, item]));
+  Future<void> _removeEvidence(EvidenceItem item) async {
+    if (item.id == null) {
+      // Belum disimpan: cukup dibuang dari daftar.
+      setState(() => _pending.remove(item));
+      return;
+    }
+    await _apply(() => widget.service.removeEvidence(item));
+  }
 
-  void _removeEvidence(EvidenceItem item) => _update(
-    _task.copyWith(evidences: _task.evidences.where((e) => e != item).toList()),
-  );
-
-  void _submit() {
-    if (_task.evidences.isEmpty) {
+  Future<void> _submit() async {
+    if (_evidences.isEmpty) {
       showMessage(
         context,
         'Tambahkan minimal satu bukti kerja sebelum mengajukan.',
@@ -259,13 +301,15 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
       );
       return;
     }
-    _update(
-      _task.copyWith(
-        status: TaskDetailStatus.submitted,
-        workNote: _note.text.trim(),
-        validations: const [], // pengajuan baru, validasi dimulai dari nol
+    final ok = await _apply(
+      () => widget.service.submit(
+        pending: List.of(_pending),
+        note: _note.text.trim(),
       ),
     );
+    if (!ok || !mounted) return;
+    setState(_pending.clear);
+    _note.text = _task.workNote;
     showMessage(context, 'Tugas diajukan untuk divalidasi.');
   }
 
@@ -277,23 +321,10 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
       picName: _task.picName,
     );
     if (comment == null) return;
-    final validations = [
-      ..._task.validations,
-      ValidationEntry(
-        validatorName: widget.myName,
-        approved: true,
-        comment: comment.isEmpty ? null : comment,
-      ),
-    ];
-    final done =
-        validations.where((v) => v.approved).length >= _task.requiredApprovals;
-    _update(
-      _task.copyWith(
-        validations: validations,
-        status: done ? TaskDetailStatus.approved : _status,
-      ),
+    final ok = await _apply(
+      () => widget.service.validate(approved: true, comment: comment),
     );
-    if (done && mounted) {
+    if (ok && mounted && _status == TaskDetailStatus.approved) {
       showMessage(context, 'Tugas disetujui dan dinyatakan selesai.');
     }
   }
@@ -301,19 +332,9 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
   Future<void> _reject() async {
     final reason = await showRejectTaskDialog(context, picName: _task.picName);
     if (reason == null) return;
-    // Satu penolakan cukup untuk mengembalikan tugas ke PIC.
-    _update(
-      _task.copyWith(
-        status: TaskDetailStatus.rejected,
-        validations: [
-          ..._task.validations,
-          ValidationEntry(
-            validatorName: widget.myName,
-            approved: false,
-            comment: reason,
-          ),
-        ],
-      ),
+    // Satu penolakan cukup untuk mengembalikan tugas ke PIC (diatur database).
+    await _apply(
+      () => widget.service.validate(approved: false, comment: reason),
     );
   }
 
@@ -324,7 +345,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (_) => TaskFormScreen(
-          members: widget.members,
+          members: _data!.members,
           initial: TaskFormValue(
             title: _task.title,
             description: _task.description,
@@ -333,21 +354,8 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
             deadline: _task.deadline,
           ),
           onSave: (value) async {
-            await widget.onSaveEdit?.call(value);
-            if (!mounted) return;
-            final pic = widget.members
-                .where((m) => m.userId == value.assigneeId)
-                .firstOrNull;
-            _update(
-              _task.copyWith(
-                title: value.title,
-                description: value.description ?? '',
-                weight: value.weight,
-                deadline: value.deadline,
-                picId: value.assigneeId,
-                picName: pic?.fullName,
-              ),
-            );
+            final data = await widget.service.save(value);
+            if (mounted) _setData(data);
           },
         ),
       ),
@@ -357,8 +365,13 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
   Future<void> _delete() async {
     final ok = await showDeleteTaskDialog(context, taskTitle: _task.title);
     if (!ok || !mounted) return;
-    widget.onDeleted?.call();
-    Navigator.of(context).pop();
+    try {
+      await widget.service.delete();
+    } catch (e) {
+      if (mounted) showError(context, e);
+      return;
+    }
+    if (mounted) Navigator.of(context).pop(true);
   }
 
   // ---------- Buka bukti ----------
@@ -389,13 +402,11 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     }
   }
 
-  /// Signed URL Storage, atau null kalau belum bisa (belum terhubung/belum
-  /// diunggah).
+  /// Signed URL Storage untuk foto/file, atau null kalau tidak ada path.
   Future<String?> _signedUrl(EvidenceItem item) async {
     final path = item.storagePath;
-    final resolver = widget.signedUrlFor;
-    if (path == null || resolver == null) return null;
-    return resolver(path);
+    if (path == null) return null;
+    return widget.service.signedUrl(path);
   }
 
   /// Ketuk bukti: tautan dibuka di browser, foto dipratinjau, file dibuka
@@ -428,68 +439,91 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
 
   void _notAvailable() {
     if (!mounted) return;
-    showMessage(
-      context,
-      'Bukti ini belum bisa dibuka. Foto dan file bisa dibuka setelah '
-      'tersimpan di Storage.',
-    );
+    showMessage(context, 'Bukti ini belum bisa dibuka.');
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_data == null) {
+      return Scaffold(
+        appBar: _appBar(),
+        body: _error != null
+            ? MessageView(
+                icon: Icons.error_outline,
+                message: friendlyError(_error!),
+                actionLabel: 'Coba lagi',
+                onAction: () {
+                  setState(() => _error = null);
+                  _reload();
+                },
+              )
+            : const Center(child: CircularProgressIndicator()),
+      );
+    }
     return Scaffold(
-      appBar: AppBar(
-        toolbarHeight: 64,
-        titleSpacing: 4,
-        leading: IconButton(
-          tooltip: 'Kembali',
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).maybePop(),
-        ),
-        title: Text(
-          'Detail tugas',
-          style: _text(
-            22,
-            FontWeight.w800,
-            color: ItsColors.blue,
-            letterSpacing: -0.44,
-          ),
-        ),
-        actions: [
-          if (widget.isLeader) ...[
-            IconButton(
-              tooltip: 'Ubah tugas',
-              icon: const Icon(Icons.edit, size: 22),
-              color: ItsColors.inkMuted,
-              onPressed: _busy ? null : () => _guard(_edit),
-            ),
-            IconButton(
-              tooltip: 'Hapus tugas',
-              icon: const Icon(Icons.delete_outline, size: 22),
-              color: _errorRed,
-              onPressed: _busy ? null : () => _guard(_delete),
-            ),
-          ],
-          const SizedBox(width: 4),
-        ],
-      ),
+      appBar: _appBar(),
       body: Column(
         children: [
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-              children: [
-                _buildSummary(),
-                const SizedBox(height: 10),
-                _buildEvidence(),
-                const SizedBox(height: 10),
-                _buildValidation(),
-              ],
+            child: RefreshIndicator(
+              onRefresh: _reload,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                children: [
+                  _buildSummary(),
+                  const SizedBox(height: 10),
+                  _buildEvidence(),
+                  const SizedBox(height: 10),
+                  _buildValidation(),
+                ],
+              ),
             ),
           ),
           _buildBottomBar(),
         ],
       ),
+    );
+  }
+
+  PreferredSizeWidget _appBar() {
+    // Tugas Disetujui terkunci di database, jadi ubah/hapus disembunyikan.
+    final showLeaderActions =
+        _data != null && _isLeader && _status != TaskDetailStatus.approved;
+    return AppBar(
+      toolbarHeight: 64,
+      titleSpacing: 4,
+      leading: IconButton(
+        tooltip: 'Kembali',
+        icon: const Icon(Icons.arrow_back),
+        onPressed: () => Navigator.of(context).maybePop(),
+      ),
+      title: Text(
+        'Detail tugas',
+        style: _text(
+          22,
+          FontWeight.w800,
+          color: ItsColors.blue,
+          letterSpacing: -0.44,
+        ),
+      ),
+      actions: [
+        if (showLeaderActions) ...[
+          IconButton(
+            tooltip: 'Ubah tugas',
+            icon: const Icon(Icons.edit, size: 22),
+            color: ItsColors.inkMuted,
+            onPressed: _busy ? null : () => _guard(_edit),
+          ),
+          IconButton(
+            tooltip: 'Hapus tugas',
+            icon: const Icon(Icons.delete_outline, size: 22),
+            color: _errorRed,
+            onPressed: _busy ? null : () => _guard(_delete),
+          ),
+        ],
+        const SizedBox(width: 4),
+      ],
     );
   }
 
@@ -616,7 +650,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
   // ---------- Kartu 2: bukti kerja ----------
 
   Widget _buildEvidence() {
-    final evidences = _task.evidences;
+    final evidences = _evidences;
     final locked = _status == TaskDetailStatus.todo;
 
     final Widget trailing;
@@ -642,9 +676,10 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
           title: 'Bukti kerja',
           trailing: trailing,
         ),
+        if (_uploading) const LinearProgressIndicator(minHeight: 3),
         if (locked)
           _InfoTile(
-            widget.isPic
+            _isPic
                 ? 'Tekan "Mulai kerjakan" di bawah untuk mengunggah '
                       'foto/file atau tautan bukti.'
                 : 'Bukti kerja belum diunggah oleh PIC.',
@@ -673,7 +708,9 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
         for (final item in evidences)
           _EvidenceTile(
             item: item,
-            onRemove: _canEditEvidence ? () => _removeEvidence(item) : null,
+            onRemove: _canEditEvidence && !_busy
+                ? () => _guard(() => _removeEvidence(item))
+                : null,
             onTap: _busy ? null : () => _guard(() => _openEvidence(item)),
             onLongPress: item.kind == EvidenceKind.link
                 ? () => _copyLink(item)
@@ -742,17 +779,17 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
   Widget _buildBottomBar() {
     final Widget? actions = switch (_status) {
       TaskDetailStatus.todo =>
-        widget.isPic
+        _isPic
             ? DialogButton(
                 label: 'Mulai kerjakan',
-                onPressed: _busy ? null : _start,
+                onPressed: _busy ? null : () => _guard(_start),
               )
             : null,
       TaskDetailStatus.inProgress =>
-        widget.isPic
+        _isPic
             ? DialogButton(
                 label: 'Ajukan validasi',
-                onPressed: _busy ? null : _submit,
+                onPressed: _busy ? null : () => _guard(_submit),
               )
             : null,
       TaskDetailStatus.submitted =>
@@ -777,10 +814,10 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
               )
             : null,
       TaskDetailStatus.rejected =>
-        widget.isPic
+        _isPic
             ? DialogButton(
                 label: 'Kirim ulang validasi',
-                onPressed: _busy ? null : _submit,
+                onPressed: _busy ? null : () => _guard(_submit),
               )
             : null,
       TaskDetailStatus.approved => Center(

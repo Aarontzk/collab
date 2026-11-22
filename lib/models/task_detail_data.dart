@@ -26,12 +26,17 @@ enum EvidenceKind { image, file, link }
 /// Satu bukti kerja (tautan, foto, atau file).
 class EvidenceItem {
   const EvidenceItem({
+    this.id,
     required this.kind,
     required this.title,
     required this.subtitle,
     this.localPath,
     this.storagePath,
   });
+
+  /// `task_evidences.id`. Kosong = bukti baru yang belum disimpan (menunggu
+  /// Ajukan validasi).
+  final String? id;
 
   final EvidenceKind kind;
 
