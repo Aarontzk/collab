@@ -73,15 +73,15 @@ abstract final class CText {
 
 /// Warna tambahan dari Figma yang belum ada di [ItsColors].
 abstract final class CColors {
-  static const neutralChip = Color(0xFFEFF0F7);
-  static const errorContainer = Color(0xFFF9DEDC);
-  static const error = Color(0xFFB3261E);
+  static const neutralChip = Color(0xFFEEEDF4);
+  static const errorContainer = Color(0xFFFFDAD6);
+  static const error = Color(0xFFBA1A1A);
 
   /// Warna ikon garis, sama dengan ikon navigasi bawah.
   static const icon = Color(0xFF49454F);
   static const success = Color(0xFF1B6E3A);
   static const successContainer = Color(0xFFDDF3E4);
-  static const outline = Color(0xFFC4C6D0);
+  static const outline = Color(0xFFC5C6D0);
   static const chipBorder = Color(0xFFE2E4EC);
   static const carousel = Color(0xFFF7F8FC);
   static const muted = Color(0xFF49454F);

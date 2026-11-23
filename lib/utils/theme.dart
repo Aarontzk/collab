@@ -1,31 +1,36 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-/// Palet ITS, persis seperti komponen di halaman "ITS Palette" Figma.
+import 'package:collab/utils/material_theme.dart';
+
+/// Palet app. Peran warnanya diambil dari Material Theme Builder
+/// (core colors ITS: #243F81, #127BBE, #FDBB16), lihat material_theme.dart.
 /// Pasangan warna (container + isi) dipakai apa adanya, jangan ditukar.
 abstract final class ItsColors {
-  static const blue = Color(0xFF243F81); // primary
-  static const blueContainer = Color(0xFFD9E2FF);
-  static const onBlueContainer = Color(0xFF233F7C);
+  static const blue = Color(0xFF4A5C92); // primary
+  static const blueContainer = Color(0xFFDBE1FF);
+  static const onBlueContainer = Color(0xFF314578);
 
-  static const skyBlue = Color(0xFF127BBE); // secondary
-  static const skyContainer = Color(0xFFD3ECF8);
-  static const onSkyContainer = Color(0xFF0B4A72);
+  static const skyBlue = Color(0xFF30628C); // secondary
+  static const skyContainer = Color(0xFFCEE5FF);
+  static const onSkyContainer = Color(0xFF0F4A73);
 
-  static const lightBlue = Color(0xFF75BDE0);
+  static const lightBlue = Color(0xFF9CCBFB); // secondaryFixedDim
 
-  static const yellow = Color(0xFFFDBB16); // tertiary
-  static const yellowContainer = Color(0xFFFFF7B3);
-  static const onYellowContainer = Color(0xFF5C4300);
+  /// Kuning ITS asli dipertahankan sebagai aksen (bintang, sorotan).
+  /// Tertiary hasil builder (#79590C) terlalu cokelat untuk peran itu.
+  static const yellow = Color(0xFFFDBB16);
+  static const yellowContainer = Color(0xFFFFDEA4); // tertiaryContainer
+  static const onYellowContainer = Color(0xFF5D4200);
 
-  static const ink = Color(0xFF1A1B20);
-  static const inkMuted = Color(0xFF44474F);
-  static const inverseSurface = Color(0xFF2E3036);
+  static const ink = Color(0xFF1A1B21); // onSurface
+  static const inkMuted = Color(0xFF45464F); // onSurfaceVariant
+  static const inverseSurface = Color(0xFF2F3036);
 
   static const background = Colors.white;
-  static const surfaceLow = Color(0xFFF2F3FA);
-  static const surfaceContainer = Color(0xFFEFF0F7);
-  static const border = Color(0xFFECEDF4);
+  static const surfaceLow = Color(0xFFF4F3FA); // surfaceContainerLow
+  static const surfaceContainer = Color(0xFFEEEDF4);
+  static const border = Color(0xFFE8E7EF); // surfaceContainerHigh
 }
 
 /// Token shape dari koleksi variabel "Shape" (M3) di Figma.
@@ -37,33 +42,10 @@ abstract final class AppShape {
   static const extraLarge = 28.0;
 }
 
-final _colorScheme = ColorScheme.fromSeed(
-  seedColor: ItsColors.blue,
-  primary: ItsColors.blue,
-  onPrimary: Colors.white,
-  primaryContainer: ItsColors.blueContainer,
-  onPrimaryContainer: ItsColors.onBlueContainer,
-  secondary: ItsColors.skyBlue,
-  onSecondary: Colors.white,
-  secondaryContainer: ItsColors.skyContainer,
-  onSecondaryContainer: ItsColors.onSkyContainer,
-  tertiary: ItsColors.yellow,
-  onTertiary: Colors.white,
-  tertiaryContainer: ItsColors.yellowContainer,
-  onTertiaryContainer: ItsColors.onYellowContainer,
-  error: const Color(0xFFB3261E),
-  errorContainer: const Color(0xFFF9DEDC),
-  onErrorContainer: const Color(0xFF852221),
+/// Skema warna dari Material Theme Builder (lihat material_theme.dart).
+final _colorScheme = MaterialTheme.lightScheme().copyWith(
+  // Latar app tetap putih bersih seperti di Figma.
   surface: Colors.white,
-  onSurface: ItsColors.ink,
-  onSurfaceVariant: ItsColors.inkMuted,
-  surfaceContainerLow: ItsColors.surfaceLow,
-  surfaceContainer: ItsColors.surfaceContainer,
-  surfaceContainerHigh: ItsColors.border,
-  surfaceContainerHighest: ItsColors.border,
-  inverseSurface: ItsColors.inverseSurface,
-  outline: const Color(0xFF74777F),
-  outlineVariant: const Color(0xFFC4C6D0),
 );
 
 /// Nama font family yang didaftarkan di pubspec.yaml (file di assets/fonts/).
