@@ -115,6 +115,22 @@ class MeetingService {
     return token as String;
   }
 
+  /// Absen satu rapat secara realtime: userId -> jam absen.
+  Stream<Map<String, DateTime>> watchAttendance(String meetingId) {
+    return supabase
+        .from('meeting_attendances')
+        .stream(primaryKey: ['meeting_id', 'user_id'])
+        .eq('meeting_id', meetingId)
+        .map(
+          (rows) => {
+            for (final r in rows)
+              r['user_id'] as String: DateTime.parse(
+                r['checked_in_at'] as String,
+              ),
+          },
+        );
+  }
+
   Future<void> checkIn(String token) async {
     await supabase.rpc('check_in', params: {'p_token': token.trim()});
   }

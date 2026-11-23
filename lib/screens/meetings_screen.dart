@@ -11,7 +11,6 @@ import 'package:collab/utils/theme.dart';
 import 'package:collab/utils/validators.dart';
 import 'package:collab/widgets/collab_ui.dart';
 import 'package:collab/widgets/common_widgets.dart';
-import 'package:collab/widgets/task_dialogs.dart';
 
 /// Posisi rapat terhadap waktu sekarang. QR bisa dibuka 15 menit sebelum mulai sampai 2 jam setelahnya.
 enum MeetingPhase { upcoming, open, past }
@@ -142,9 +141,21 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
     await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => MeetingQrScreen(
-          meeting: meeting,
-          groupId: widget.group.id,
-          members: widget.members,
+          title: meeting.title,
+          startsAt: meeting.startsAt,
+          fetchToken: () => _repo.getQrToken(meeting.id),
+          attendance: _repo
+              .watchAttendance(meeting.id)
+              .map(
+                (attended) => [
+                  for (final m in widget.members)
+                    AttendanceEntry(
+                      userId: m.userId,
+                      fullName: m.fullName,
+                      checkedInAt: attended[m.userId],
+                    ),
+                ],
+              ),
         ),
       ),
     );
@@ -153,7 +164,14 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
 
   Future<void> _scan(Meeting meeting) async {
     final ok = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => ScanQrScreen(meeting: meeting)),
+      MaterialPageRoute(
+        builder: (_) => ScanQrScreen(
+          meeting: MeetingInfo(
+            title: meeting.title,
+            schedule: meeting.startsAt,
+          ),
+        ),
+      ),
     );
     if (ok == true && mounted) {
       showMessage(context, 'Absen berhasil');

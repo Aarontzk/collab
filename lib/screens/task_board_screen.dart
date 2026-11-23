@@ -6,6 +6,7 @@ import 'package:collab/screens/task_detail_screen.dart';
 import 'package:collab/screens/task_form_screen.dart';
 import 'package:collab/services/meeting_service.dart';
 import 'package:collab/services/supabase_service.dart';
+import 'package:collab/services/task_detail_service.dart';
 import 'package:collab/services/task_service.dart';
 import 'package:collab/utils/dates.dart';
 import 'package:collab/utils/errors.dart';
@@ -47,11 +48,35 @@ class _TaskBoardScreenState extends State<TaskBoardScreen> {
 
   void _open(Task task) => Navigator.of(context).push(
     MaterialPageRoute(
-      builder: (_) => TaskDetailScreen(
-        taskId: task.id,
-        group: widget.group,
-        members: widget.members,
-      ),
+      builder: (_) =>
+          TaskDetailScreen(service: SupabaseTaskDetailService(task.id)),
+    ),
+  );
+
+  /// Tugas terakhir dari stream, untuk menghitung tugas aktif tiap anggota.
+  List<Task> _latest = const [];
+
+  List<TaskFormMember> _formMembers() => [
+    for (final m in widget.members)
+      if (m.role != MemberRole.lecturer)
+        TaskFormMember(
+          userId: m.userId,
+          fullName: m.fullName,
+          isLeader: m.role == MemberRole.leader,
+          activeTasks: _latest
+              .where((t) => t.assigneeId == m.userId && !t.isDone)
+              .length,
+        ),
+  ];
+
+  Future<void> _create(TaskFormValue value) => _repo.createTask(
+    TaskDraft(
+      groupId: widget.group.id,
+      title: value.title,
+      description: value.description,
+      assigneeId: value.assigneeId,
+      weight: TaskWeight.fromValue(value.weight),
+      deadline: value.deadline,
     ),
   );
 
@@ -63,10 +88,8 @@ class _TaskBoardScreenState extends State<TaskBoardScreen> {
               tooltip: 'Tambah Tugas',
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => TaskFormScreen(
-                    group: widget.group,
-                    members: widget.members,
-                  ),
+                  builder: (_) =>
+                      TaskFormScreen(members: _formMembers(), onSave: _create),
                 ),
               ),
               child: const Icon(Icons.add),
@@ -84,7 +107,8 @@ class _TaskBoardScreenState extends State<TaskBoardScreen> {
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
-          return _board(snapshot.data!);
+          _latest = snapshot.data!;
+          return _board(_latest);
         },
       ),
     );

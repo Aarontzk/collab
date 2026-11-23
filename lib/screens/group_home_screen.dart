@@ -5,14 +5,15 @@ import 'package:flutter/services.dart';
 import 'package:collab/utils/theme.dart';
 import 'package:collab/widgets/collab_ui.dart';
 import 'package:collab/widgets/common_widgets.dart';
-import 'package:collab/screens/contribution_screen.dart';
+import 'package:collab/screens/detail_kontribusi_kelompok.dart';
 import 'package:collab/screens/meetings_screen.dart';
 import 'package:collab/screens/peer_review_screen.dart';
 import 'package:collab/screens/task_board_screen.dart';
 import 'package:collab/models/group.dart';
+import 'package:collab/services/contribution_service.dart';
 import 'package:collab/services/group_service.dart';
+import 'package:collab/widgets/contribution_nav_bar.dart';
 import 'package:collab/widgets/group_dialogs.dart';
-import 'package:collab/widgets/task_dialogs.dart';
 
 /// Halaman utama satu kelompok: Tugas, Rapat, Review, Kontribusi.
 class GroupHomeScreen extends StatefulWidget {
@@ -37,9 +38,18 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
   void _reloadMembers() =>
       setState(() => _members = _repo.fetchMembers(widget.group.id));
 
+  void _selectTab(int i) {
+    if (i != _tab) HapticFeedback.selectionClick();
+    setState(() => _tab = i);
+  }
+
   @override
   Widget build(BuildContext context) {
     final group = _group;
+    // Halaman Kontribusi (Maria) punya AppBar dan navigasi bawah sendiri.
+    if (_tab == 3) {
+      return _ContributionTab(group: group, onTabSelected: _selectTab);
+    }
     return Scaffold(
       appBar: AppBar(
         title: Text(group.name),
@@ -59,17 +69,13 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
           children: [
             TaskBoardScreen(group: group, members: members),
             MeetingsScreen(group: group, members: members),
-            PeerReviewScreen(group: group, members: members),
-            ContributionScreen(group: group, members: members),
+            const PeerReviewScreen(),
           ],
         ),
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _tab,
-        onDestinationSelected: (i) {
-          if (i != _tab) HapticFeedback.selectionClick();
-          setState(() => _tab = i);
-        },
+        onDestinationSelected: _selectTab,
         destinations: [
           // Ikon garis yang sama dengan Collab/Ikon di Figma, aktif maupun tidak.
           _destination(Icons.checklist, 'Tugas'),
@@ -410,6 +416,54 @@ class _CodeCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Memuat skor, tugas, dan jumlah rapat lalu menampilkan halaman Kontribusi.
+class _ContributionTab extends StatefulWidget {
+  const _ContributionTab({required this.group, required this.onTabSelected});
+  final Group group;
+  final ValueChanged<int> onTabSelected;
+
+  @override
+  State<_ContributionTab> createState() => _ContributionTabState();
+}
+
+class _ContributionTabState extends State<_ContributionTab> {
+  final _service = ContributionService();
+  late Future<ContributionData> _data = _service.fetchGroup(widget.group.id);
+
+  void _reload() =>
+      setState(() => _data = _service.fetchGroup(widget.group.id));
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<ContributionData>(
+      future: _data,
+      builder: (context, snapshot) {
+        final data = snapshot.data;
+        if (data != null) {
+          return DetailKontribusiKelompokScreen(
+            group: widget.group,
+            scores: data.scores,
+            tasks: data.tasks,
+            totalMeetings: data.totalMeetings,
+            onTabSelected: widget.onTabSelected,
+          );
+        }
+        return Scaffold(
+          appBar: AppBar(title: Text(widget.group.name)),
+          body: AsyncView<ContributionData>(
+            future: _data,
+            onRetry: _reload,
+            builder: (_, _) => const SizedBox.shrink(),
+          ),
+          bottomNavigationBar: ContributionNavBar(
+            onSelected: widget.onTabSelected,
+          ),
+        );
+      },
     );
   }
 }
